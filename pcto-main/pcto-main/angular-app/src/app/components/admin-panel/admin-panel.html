@@ -1,0 +1,745 @@
+<!-- BARRA SUPERIORE AMMINISTRATORE (FISSA IN ALTO) -->
+<header class="admin-top-bar">
+  <div class="admin-bar-left">
+    <div class="admin-badge">
+      <span class="admin-shield">🛡️</span>
+      <span class="admin-title">Modalità Amministratore</span>
+    </div>
+
+    <button
+      type="button"
+      class="btn-admin-nav"
+      [class.active]="sidebarOpen()"
+      (click)="toggleSidebar()"
+      title="Apri o chiudi il pannello per modificare le informazioni del sito"
+    >
+      📂 Modifica Informazioni
+      <span class="admin-count-pill">{{ categoryList().length + ruleList().length }} elementi</span>
+    </button>
+
+    <button
+      type="button"
+      class="btn-admin-nav"
+      (click)="openTab('homeTexts')"
+      title="Modifica i testi visibili sulla Home"
+    >
+      📝 Modifica Testi Home
+    </button>
+  </div>
+
+  <div class="admin-bar-center">
+    @if (dataService.hasUnsavedChanges()) {
+      <div class="status-badge unsaved">
+        <span class="status-dot pulsing"></span>
+        <span>Modifiche non salvate</span>
+      </div>
+    } @else {
+      <div class="status-badge saved">
+        <span class="status-dot"></span>
+        <span>Tutto sincronizzato</span>
+      </div>
+    }
+  </div>
+
+  <div class="admin-bar-right">
+    <!-- BOTTONE 1: SALVA TUTTE LE MODIFICHE -->
+    <button
+      type="button"
+      class="btn-action-primary"
+      (click)="saveAllChanges()"
+      title="Salva tutte le modifiche apportate nel browser"
+    >
+      <span class="btn-icon">💾</span>
+      <span>Salva modifiche</span>
+    </button>
+
+    <!-- UTILITÀ: RIPRISTINA ALL'ULTIMO SALVATAGGIO -->
+    <button
+      type="button"
+      class="btn-action-utility"
+      (click)="resetToLastSaved()"
+      title="Annulla le modifiche non salvate e ripristina all'ultimo salvataggio"
+    >
+      <span class="btn-icon">↺</span>
+      <span>Ripristina</span>
+    </button>
+
+    <!-- BOTTONE 2: TORNA ALL'APPLICAZIONE NORMALE -->
+    <button
+      type="button"
+      class="btn-action-exit"
+      (click)="exitAdminMode()"
+      title="Torna alla vista normale del sito"
+    >
+      <span class="btn-icon">✕</span>
+      <span>Torna all'applicazione normale</span>
+    </button>
+  </div>
+</header>
+
+<!-- BACKDROP PER SIDEBAR SU DISPOSITIVI PICCOLI -->
+@if (sidebarOpen()) {
+  <div class="sidebar-backdrop" (click)="toggleSidebar()"></div>
+}
+
+<!-- BARRA LATERALE (SIDEBAR DRAWER) -->
+<aside class="admin-sidebar" [class.open]="sidebarOpen()">
+  <!-- INTESTAZIONE SIDEBAR -->
+  <div class="sidebar-header">
+    <div class="sidebar-header-titles">
+      <h3>Gestione Database</h3>
+      <p>Modifica, aggiungi o elimina righe del sito</p>
+    </div>
+    <button type="button" class="btn-close-sidebar" (click)="toggleSidebar()" aria-label="Chiudi barra laterale">
+      ✕
+    </button>
+  </div>
+
+  <!-- LINGUETTE (TABS) DEL DATABASE -->
+  <nav class="sidebar-tabs">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'categorie'"
+      (click)="openTab('categorie')"
+    >
+      📁 Categorie <span class="tab-badge">{{ categoryList().length }}</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'regole'"
+      (click)="openTab('regole')"
+    >
+      ⚖️ Regole <span class="tab-badge">{{ ruleList().length }}</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'attivita'"
+      (click)="openTab('attivita')"
+    >
+      🎯 Attività <span class="tab-badge">{{ activityCount() }}</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'test'"
+      (click)="openTab('test')"
+    >
+      ❓ Test <span class="tab-badge">{{ data().testQuestions.length }}</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'raccomandazioni'"
+      (click)="openTab('raccomandazioni')"
+    >
+      🏛️ Milano <span class="tab-badge">{{ recommendationList().length }}</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'keywords'"
+      (click)="openTab('keywords')"
+    >
+      🔑 Keywords <span class="tab-badge">{{ data().keywords.length }}</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'homeTexts'"
+      (click)="openTab('homeTexts')"
+    >
+      📝 Testi Home
+    </button>
+  </nav>
+
+  <!-- CONTENUTO DELLE SEZIONI -->
+  <div class="sidebar-content">
+    <!-- BARRA DI RICERCA INTERNA (se non siamo su testi home) -->
+    @if (activeTab() !== 'homeTexts') {
+      <div class="sidebar-search-row">
+        <div class="search-input-box">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Cerca in questa tabella..."
+            [ngModel]="filterQuery()"
+            (ngModelChange)="filterQuery.set($event); keywordsPage.set(1)"
+          />
+          @if (filterQuery()) {
+            <button type="button" class="btn-clear-search" (click)="filterQuery.set('')">✕</button>
+          }
+        </div>
+        <button type="button" class="btn-add-entity" (click)="openAddModal(activeTab())">
+          + Aggiungi
+        </button>
+      </div>
+    }
+
+    <!-- TAB 1: CATEGORIE -->
+    @if (activeTab() === 'categorie') {
+      <div class="entity-list">
+        @if (filteredCategories().length === 0) {
+          <div class="empty-state">Nessuna categoria trovata.</div>
+        }
+        @for (cat of filteredCategories(); track cat.id) {
+          <div class="item-card">
+            <div class="item-card-header">
+              <div class="item-card-title-group">
+                <span class="category-pill">{{ cat.categoria }}</span>
+                <h4>{{ cat.nome }}</h4>
+              </div>
+              <div class="item-card-actions">
+                <button type="button" class="btn-icon-action" (click)="editCategory(cat)" title="Modifica categoria">✏️</button>
+                <button type="button" class="btn-icon-action delete" (click)="askDelete('categorie', cat.id, cat.nome)" title="Elimina categoria">🗑️</button>
+              </div>
+            </div>
+            <p class="item-card-desc">{{ cat.descrizione }}</p>
+            @if (cat.link) {
+              <div class="item-card-footer">
+                <a [href]="cat.link" target="_blank" rel="noopener noreferrer" class="link-external">
+                  🔗 Documento di approfondimento →
+                </a>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 2: REGOLE -->
+    @if (activeTab() === 'regole') {
+      <div class="entity-list">
+        @if (filteredRules().length === 0) {
+          <div class="empty-state">Nessuna regola trovata.</div>
+        }
+        @for (rule of filteredRules(); track rule.nome) {
+          <div class="item-card">
+            <div class="item-card-header">
+              <div class="item-card-title-group">
+                <span class="rule-emoji">{{ rule.icona || '📌' }}</span>
+                <h4>{{ rule.nome }}</h4>
+              </div>
+              <div class="item-card-actions">
+                <button type="button" class="btn-icon-action" (click)="editRule(rule)" title="Modifica regola">✏️</button>
+                <button type="button" class="btn-icon-action" (click)="duplicateRule(rule)" title="Duplica regola">📋</button>
+                <button type="button" class="btn-icon-action delete" (click)="askDelete('regole', rule.nome, rule.nome)" title="Elimina regola">🗑️</button>
+              </div>
+            </div>
+            <p class="item-card-desc">{{ rule.descrizione }}</p>
+            <div class="item-badges-wrap">
+              @for (c of rule.categorie; track c) {
+                <span class="badge-mini-cat">{{ c }}</span>
+              }
+            </div>
+            @if (rule.raccomandazione) {
+              <div class="item-card-rec">
+                🏛️ <strong>Milano:</strong> {{ rule.raccomandazione }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 3: ATTIVITÀ -->
+    @if (activeTab() === 'attivita') {
+      <div class="entity-list">
+        @if (filteredActivities().length === 0) {
+          <div class="empty-state">Nessuna attività trovata.</div>
+        }
+        @for (act of filteredActivities(); track act.nome) {
+          <div class="item-card">
+            <div class="item-card-header">
+              <div class="item-card-title-group">
+                <span class="badge-rule-ref">Regola: {{ act.regola }}</span>
+                <h4>{{ act.nome }}</h4>
+              </div>
+              <div class="item-card-actions">
+                <button type="button" class="btn-icon-action" (click)="editActivity(act)" title="Modifica attività">✏️</button>
+                <button type="button" class="btn-icon-action" (click)="duplicateActivity(act)" title="Duplica attività">📋</button>
+                <button type="button" class="btn-icon-action delete" (click)="askDelete('attivita', act.nome, act.nome)" title="Elimina attività">🗑️</button>
+              </div>
+            </div>
+            <p class="item-card-desc">{{ act.descrizione }}</p>
+            <div class="item-meta-row">
+              @if (act.eta) { <span class="meta-item">👶 Età: {{ act.eta }}</span> }
+              @if (act.durata) { <span class="meta-item">⏱️ Durata: {{ act.durata }}</span> }
+              @if (act.frequenza) { <span class="meta-item">📅 {{ act.frequenza }}</span> }
+            </div>
+            @if (act.approccio) {
+              <div class="item-card-footer">
+                <a [href]="act.approccio" target="_blank" rel="noopener noreferrer" class="link-external">
+                  📘 Approfondimento teorico →
+                </a>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 4: DOMANDE TEST -->
+    @if (activeTab() === 'test') {
+      <div class="entity-list">
+        @if (filteredQuestions().length === 0) {
+          <div class="empty-state">Nessuna domanda trovata.</div>
+        }
+        @for (q of filteredQuestions(); track q.domanda; let idx = $index) {
+          <div class="item-card">
+            <div class="item-card-header">
+              <div class="item-card-title-group">
+                <span class="question-number">#{{ idx + 1 }}</span>
+                <span class="category-pill">{{ q.categoria }}</span>
+              </div>
+              <div class="item-card-actions">
+                <button type="button" class="btn-icon-action" (click)="editQuestion(q)" title="Modifica domanda">✏️</button>
+                <button type="button" class="btn-icon-action delete" (click)="askDelete('test', q.domanda, q.domanda)" title="Elimina domanda">🗑️</button>
+              </div>
+            </div>
+            <p class="question-text">"{{ q.domanda }}"</p>
+            <div class="test-rules-feedback">
+              @if (q.se_si) {
+                <div class="rule-target si">✅ Se SÌ: <strong>{{ q.se_si }}</strong></div>
+              }
+              @if (q.se_no) {
+                <div class="rule-target no">❌ Se NO: <strong>{{ q.se_no }}</strong></div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 5: RACCOMANDAZIONI MILANO -->
+    @if (activeTab() === 'raccomandazioni') {
+      <div class="entity-list">
+        @if (filteredRecommendations().length === 0) {
+          <div class="empty-state">Nessuna raccomandazione trovata.</div>
+        }
+        @for (rec of filteredRecommendations(); track rec.nome) {
+          <div class="item-card">
+            <div class="item-card-header">
+              <div class="item-card-title-group">
+                <span class="rec-icon">🏛️</span>
+                <h4>{{ rec.nome }}</h4>
+              </div>
+              <div class="item-card-actions">
+                <button type="button" class="btn-icon-action" (click)="editRecommendation(rec)" title="Modifica raccomandazione">✏️</button>
+                <button type="button" class="btn-icon-action delete" (click)="askDelete('raccomandazioni', rec.nome, rec.nome)" title="Elimina raccomandazione">🗑️</button>
+              </div>
+            </div>
+            <p class="item-card-desc">{{ rec.descrizione }}</p>
+            @if (rec.link) {
+              <div class="item-card-footer">
+                <a [href]="rec.link" target="_blank" rel="noopener noreferrer" class="link-external">
+                  🔗 Link istituzionale →
+                </a>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 6: KEYWORDS (PAROLE CHIAVE) -->
+    @if (activeTab() === 'keywords') {
+      <div class="keywords-wrap">
+        <div class="keywords-pagination-info">
+          <span>Totale trovate: <strong>{{ allFilteredKeywords().length }}</strong></span>
+          <div class="pagination-controls">
+            <button type="button" class="btn-page" [disabled]="keywordsPage() <= 1" (click)="prevKeywordsPage()">◀</button>
+            <span class="page-indicator">{{ keywordsPage() }} / {{ totalKeywordsPages() }}</span>
+            <button type="button" class="btn-page" [disabled]="keywordsPage() >= totalKeywordsPages()" (click)="nextKeywordsPage()">▶</button>
+          </div>
+        </div>
+
+        <div class="entity-list">
+          @if (paginatedKeywords().length === 0) {
+            <div class="empty-state">Nessuna parola chiave trovata.</div>
+          }
+          @for (kw of paginatedKeywords(); track kw.preoccupazione) {
+            <div class="item-card keyword-item">
+              <div class="item-card-header">
+                <div class="keyword-phrase">"{{ kw.preoccupazione }}"</div>
+                <div class="item-card-actions">
+                  <button type="button" class="btn-icon-action" (click)="editKeyword(kw)" title="Modifica keyword">✏️</button>
+                  <button type="button" class="btn-icon-action delete" (click)="askDelete('keywords', kw.preoccupazione, kw.preoccupazione)" title="Elimina keyword">🗑️</button>
+                </div>
+              </div>
+              <div class="keyword-cats">
+                @for (c of kw.categorie; track c) {
+                  <span class="badge-mini-cat">{{ c }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- TAB 7: TESTI DELLA HOME -->
+    @if (activeTab() === 'homeTexts') {
+      <div class="home-texts-editor">
+        <div class="home-section-box">
+          <h4>🌟 Sezione Hero (Intestazione)</h4>
+          <label class="form-label">Sopratitolo (Eyebrow)</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.heroEyebrow" />
+
+          <label class="form-label">Badge di versione</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.heroBetaBadge" />
+
+          <label class="form-label">Titolo principale H1</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.heroTitle" />
+
+          <label class="form-label">Sottotitolo H3</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.heroSubtitle" />
+
+          <label class="form-label">Testo introduttivo (paragrafo 1)</label>
+          <textarea rows="3" class="form-textarea" [(ngModel)]="homeTextsForm.heroSub1"></textarea>
+
+          <label class="form-label">Testo descrittivo (paragrafo 2 con riferimenti)</label>
+          <textarea rows="3" class="form-textarea" [(ngModel)]="homeTextsForm.heroSub2"></textarea>
+
+          <div class="form-row-2">
+            <div>
+              <label class="form-label">Testo Pulsante Primario</label>
+              <input type="text" class="form-input" [(ngModel)]="homeTextsForm.heroCtaPrimary" />
+            </div>
+            <div>
+              <label class="form-label">Testo Pulsante Secondario</label>
+              <input type="text" class="form-input" [(ngModel)]="homeTextsForm.heroCtaSecondary" />
+            </div>
+          </div>
+        </div>
+
+        <div class="home-section-box">
+          <h4>🔍 Sezione Ricerca</h4>
+          <label class="form-label">Sopratitolo</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.searchEyebrow" />
+
+          <label class="form-label">Titolo H2</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.searchTitle" />
+
+          <label class="form-label">Sottotitolo / spiegazione</label>
+          <textarea rows="2" class="form-textarea" [(ngModel)]="homeTextsForm.searchSubtitle"></textarea>
+
+          <label class="form-label">Testo segnaposto (placeholder)</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.searchPlaceholder" />
+        </div>
+
+        <div class="home-section-box">
+          <h4>❓ Sezione Percorso Guidato (Test)</h4>
+          <label class="form-label">Titolo banner</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.testBannerTitle" />
+
+          <label class="form-label">Descrizione banner</label>
+          <textarea rows="2" class="form-textarea" [(ngModel)]="homeTextsForm.testBannerDescription"></textarea>
+
+          <label class="form-label">Testo pulsante test</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.testBannerButton" />
+        </div>
+
+        <div class="home-section-box">
+          <h4>🛣️ Sezione Come Funziona</h4>
+          <label class="form-label">Etichetta sezione</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.howItWorksLabel" />
+
+          <label class="form-label">Titolo</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.howItWorksTitle" />
+
+          <label class="form-label">Sottotitolo</label>
+          <textarea rows="2" class="form-textarea" [(ngModel)]="homeTextsForm.howItWorksSub"></textarea>
+        </div>
+
+        <div class="home-section-box">
+          <h4>🔬 Sezione Basi Scientifiche</h4>
+          <label class="form-label">Etichetta sezione</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.scienceLabel" />
+
+          <label class="form-label">Titolo</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.scienceTitle" />
+
+          <label class="form-label">Sottotitolo</label>
+          <textarea rows="2" class="form-textarea" [(ngModel)]="homeTextsForm.scienceSub"></textarea>
+        </div>
+
+        <div class="home-section-box">
+          <h4>🔒 Sezione Privacy</h4>
+          <label class="form-label">Etichetta</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.privacyLabel" />
+
+          <label class="form-label">Titolo</label>
+          <input type="text" class="form-input" [(ngModel)]="homeTextsForm.privacyTitle" />
+
+          <label class="form-label">Sottotitolo</label>
+          <textarea rows="2" class="form-textarea" [(ngModel)]="homeTextsForm.privacySub"></textarea>
+        </div>
+
+        <button type="button" class="btn-save-home-texts" (click)="saveHomeTexts()">
+          💾 Salva Modifiche Testi Home
+        </button>
+      </div>
+    }
+  </div>
+</aside>
+
+<!-- MODALE EDITOR: MODIFICA / INSERIMENTO ELEMENTO -->
+@if (editModalOpen()) {
+  <div class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>
+          @if (isNewItem()) {
+            ➕ Nuovo elemento: {{ currentEntity() }}
+          } @else {
+            ✏️ Modifica: {{ originalKey() }}
+          }
+        </h3>
+        <button type="button" class="btn-modal-close" (click)="editModalOpen.set(false)">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- FORM CATEGORIA -->
+        @if (currentEntity() === 'categorie') {
+          <div class="form-group">
+            <label class="form-label">Nome Categoria (Identificativo univoco) *</label>
+            <input type="text" class="form-input" [(ngModel)]="categoryForm.categoria" placeholder="es. dipendenza" />
+            <span class="form-hint">Usato internamente per collegare regole e parole chiave.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Titolo Visualizzato *</label>
+            <input type="text" class="form-input" [(ngModel)]="categoryForm.nome" placeholder="es. dipendenza dai dispositivi" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Descrizione (Info in breve) *</label>
+            <textarea rows="4" class="form-textarea" [(ngModel)]="categoryForm.descrizione" placeholder="Spiegazione chiara per i genitori..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Link Documento di Approfondimento</label>
+            <input type="url" class="form-input" [(ngModel)]="categoryForm.link" placeholder="https://docs.google.com/..." />
+          </div>
+        }
+
+        <!-- FORM REGOLA -->
+        @if (currentEntity() === 'regole') {
+          <div class="form-group">
+            <label class="form-label">Nome della Regola *</label>
+            <input type="text" class="form-input" [(ngModel)]="ruleForm.nome" placeholder="es. ZONE OFF-LIMITS" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Descrizione della Regola *</label>
+            <textarea rows="3" class="form-textarea" [(ngModel)]="ruleForm.descrizione" placeholder="Regola pratica e chiara da applicare in casa..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Icona / Emoji</label>
+            <div class="emoji-selector-row">
+              <input type="text" class="form-input emoji-input" [(ngModel)]="ruleForm.icona" style="width: 70px; text-align: center; font-size: 1.5rem;" />
+              <div class="emoji-quick-picks">
+                @for (em of commonEmojis; track em) {
+                  <button type="button" class="btn-emoji-pick" (click)="ruleForm.icona = em">{{ em }}</button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Categorie di rischio collegate</label>
+            <div class="categories-checkbox-grid">
+              @for (cat of categoryList(); track cat.id) {
+                <label class="checkbox-label" [class.selected]="ruleForm.categorie.includes(cat.categoria) || ruleForm.categorie.includes(cat.id)">
+                  <input
+                    type="checkbox"
+                    [checked]="ruleForm.categorie.includes(cat.categoria) || ruleForm.categorie.includes(cat.id)"
+                    (change)="toggleCategorySelection(ruleForm.categorie, cat.categoria)"
+                  />
+                  <span>{{ cat.nome }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Raccomandazione del Comune di Milano collegata</label>
+            <select class="form-select" [(ngModel)]="ruleForm.raccomandazione">
+              <option value="">-- Nessuna raccomandazione --</option>
+              @for (rec of recommendationList(); track rec.nome) {
+                <option [value]="rec.nome">{{ rec.nome }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Link Raccomandazione (opzionale)</label>
+            <input type="url" class="form-input" [(ngModel)]="ruleForm.linkRaccomandazione" placeholder="https://..." />
+          </div>
+        }
+
+        <!-- FORM ATTIVITÀ -->
+        @if (currentEntity() === 'attivita') {
+          <div class="form-group">
+            <label class="form-label">Regola Associata *</label>
+            <select class="form-select" [(ngModel)]="activityForm.regola">
+              @for (r of ruleList(); track r.nome) {
+                <option [value]="r.nome">{{ r.icona }} {{ r.nome }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nome dell'Attività *</label>
+            <input type="text" class="form-input" [(ngModel)]="activityForm.nome" placeholder="es. Un giorno senza dispositivi" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Descrizione dell'Attività *</label>
+            <textarea rows="3" class="form-textarea" [(ngModel)]="activityForm.descrizione" placeholder="Cosa fare concretamente in famiglia..."></textarea>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label">Età di riferimento</label>
+              <input type="text" class="form-input" [(ngModel)]="activityForm.eta" placeholder="es. 10-16 oppure 12" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Durata</label>
+              <input type="text" class="form-input" [(ngModel)]="activityForm.durata" placeholder="es. 2 mesi o Continuo" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Frequenza</label>
+              <input type="text" class="form-input" [(ngModel)]="activityForm.frequenza" placeholder="es. settimanale" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Approccio Teorico / Link Documento</label>
+            <input type="url" class="form-input" [(ngModel)]="activityForm.approccio" placeholder="https://docs.google.com/..." />
+          </div>
+        }
+
+        <!-- FORM DOMANDA TEST -->
+        @if (currentEntity() === 'test') {
+          <div class="form-group">
+            <label class="form-label">Testo della Domanda *</label>
+            <textarea rows="3" class="form-textarea" [(ngModel)]="questionForm.domanda" placeholder="es. Avete stabilito orari precisi per l'uso dei dispositivi?"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Categoria di rischio collegata *</label>
+            <select class="form-select" [(ngModel)]="questionForm.categoria">
+              @for (cat of categoryList(); track cat.id) {
+                <option [value]="cat.categoria">{{ cat.nome }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Regola consigliata se la risposta è SÌ</label>
+            <select class="form-select" [(ngModel)]="questionForm.se_si">
+              <option value="">-- Nessuna regola --</option>
+              @for (r of ruleList(); track r.nome) {
+                <option [value]="r.nome">{{ r.nome }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Regola consigliata se la risposta è NO *</label>
+            <select class="form-select" [(ngModel)]="questionForm.se_no">
+              <option value="">-- Nessuna regola --</option>
+              @for (r of ruleList(); track r.nome) {
+                <option [value]="r.nome">{{ r.nome }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- FORM RACCOMANDAZIONE MILANO -->
+        @if (currentEntity() === 'raccomandazioni') {
+          <div class="form-group">
+            <label class="form-label">Titolo della Raccomandazione *</label>
+            <input type="text" class="form-input" [(ngModel)]="recForm.nome" placeholder="es. Alleanza educativa (Patto)" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Descrizione *</label>
+            <textarea rows="4" class="form-textarea" [(ngModel)]="recForm.descrizione" placeholder="Descrizione dettagliata della raccomandazione..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Link Istituzionale</label>
+            <input type="url" class="form-input" [(ngModel)]="recForm.link" placeholder="https://www.comune.milano.it/..." />
+          </div>
+        }
+
+        <!-- FORM KEYWORD -->
+        @if (currentEntity() === 'keywords') {
+          <div class="form-group">
+            <label class="form-label">Preoccupazione / Frase cercata dal genitore *</label>
+            <input type="text" class="form-input" [(ngModel)]="keywordForm.preoccupazione" placeholder="es. sta sempre con il cellulare in mano" />
+            <span class="form-hint">Questa frase permetterà al genitore di trovare le categorie giuste nel motore di ricerca.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Categorie collegate *</label>
+            <div class="categories-checkbox-grid">
+              @for (cat of categoryList(); track cat.id) {
+                <label class="checkbox-label" [class.selected]="keywordForm.categorie.includes(cat.categoria) || keywordForm.categorie.includes(cat.id)">
+                  <input
+                    type="checkbox"
+                    [checked]="keywordForm.categorie.includes(cat.categoria) || keywordForm.categorie.includes(cat.id)"
+                    (change)="toggleCategorySelection(keywordForm.categorie, cat.categoria)"
+                  />
+                  <span>{{ cat.nome }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="editModalOpen.set(false)">Annulla</button>
+        <button type="button" class="btn-submit" (click)="saveEntity()">Salva elemento</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODALE CONFERMA ELIMINAZIONE -->
+@if (confirmDeleteModal()) {
+  <div class="modal-backdrop">
+    <div class="modal-card modal-confirm">
+      <div class="modal-header">
+        <h3>🗑️ Conferma eliminazione</h3>
+        <button type="button" class="btn-modal-close" (click)="cancelDelete()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Sei sicuro di voler eliminare definitivamente <strong>"{{ confirmDeleteModal()?.title }}"</strong>?
+        </p>
+        <p class="warning-sub">
+          L'elemento verrà rimosso dalla tabella. Ricordati poi di cliccare "Salva modifiche" per rendere permanente l'operazione.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="cancelDelete()">Annulla</button>
+        <button type="button" class="btn-danger" (click)="confirmDelete()">Elimina definitivamente</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- NOTIFICA TOAST -->
+@if (toast()) {
+  <div class="toast-popup" [class]="toast()?.type">
+    <span class="toast-message">{{ toast()?.message }}</span>
+  </div>
+}

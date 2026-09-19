@@ -1,0 +1,478 @@
+<!-- PANNELLO AMMINISTRATORE (VISIBILE SOLO SE LOGGATO) -->
+@if (isAdmin()) {
+  <app-admin-panel #adminPanel></app-admin-panel>
+}
+
+<div class="home-page-container" [class.admin-active]="isAdmin()">
+  <!-- NAVBAR -->
+  <nav class="navbar-custom" [class.navbar-hidden]="navbarHidden()" [class.admin-nav-offset]="isAdmin()">
+    <a class="navbar-brand-text text-decoration-none" routerLink="/">
+      🌿 Comunità educante digitale
+    </a>
+
+    <button
+      type="button"
+      class="navbar-toggle"
+      [class.open]="mobileMenuOpen()"
+      (click)="toggleMobileMenu()"
+      [attr.aria-expanded]="mobileMenuOpen()"
+      aria-controls="navbar-links"
+      aria-label="Apri il menu di navigazione"
+    >
+      <span class="navbar-toggle-bar"></span>
+      <span class="navbar-toggle-bar"></span>
+      <span class="navbar-toggle-bar"></span>
+    </button>
+
+    <div class="navbar-links" id="navbar-links" [class.open]="mobileMenuOpen()">
+      <a href="#che-cose" class="nav-link-custom text-decoration-none px-4" (click)="closeMobileMenu()">Che cos'è?</a>
+      <a href="#come-funziona" class="nav-link-custom text-decoration-none px-4" (click)="closeMobileMenu()">Come funziona</a>
+      <a href="#esperti" class="nav-link-custom text-decoration-none px-4" (click)="closeMobileMenu()">Riferimenti teorici</a>
+      <a href="#temi" class="nav-link-custom text-decoration-none px-4" (click)="closeMobileMenu()">Categorie di rischio</a>
+      <a href="#chi-siamo" class="nav-link-custom text-decoration-none px-4" (click)="closeMobileMenu()">Chi siamo</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="che-cose">
+    <div class="hero-top-row">
+      <span class="hero-eyebrow">{{ homeTexts().heroEyebrow }}</span>
+      <span class="hero-eyebrowns">{{ homeTexts().heroBetaBadge }}</span>
+      
+    </div>
+
+    <h1>{{ homeTexts().heroTitle }}</h1>
+    <h3 class="hero-subtitle">{{ homeTexts().heroSubtitle }}</h3>
+    <p class="hero-sub">
+      {{ homeTexts().heroSub1 }}
+      <br><br>
+      {{ homeTexts().heroSub2 }}
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="#cerca" class="btn-primary-hero">{{ homeTexts().heroCtaPrimary }}</a>
+      <a href="#come-funziona" class="btn-secondary-hero">{{ homeTexts().heroCtaSecondary }}</a>
+    </div>
+  </section>
+
+  <!-- RICERCA -->
+  <section class="search-section" id="cerca">
+    <div class="search-section-inner">
+      <div class="section-edit-anchor">
+        <div class="search-eyebrow">{{ homeTexts().searchEyebrow }}</div>
+        @if (isAdmin()) {
+          <button type="button" class="btn-inline-edit" (click)="editHomeSection('keywords')" title="Gestisci parole chiave di ricerca">
+            🔑 Gestisci Parole Chiave
+          </button>
+        }
+      </div>
+
+      <h2>{{ homeTexts().searchTitle }}</h2>
+      <p>{{ homeTexts().searchSubtitle }}</p>
+
+      <div class="multi-search-wrap">
+        @for (campo of campi(); track ci; let ci = $index) {
+          <div class="search-input-row">
+            <div class="search-input-holder">
+              <input
+                class="search-big"
+                type="search"
+                autocomplete="off"
+                [placeholder]="ci === 0 ? homeTexts().searchPlaceholder : 'Aggiungi un\'altra preoccupazione...'"
+                [ngModel]="campo"
+                (ngModelChange)="updateCampo(ci, $event)"
+                (focus)="onFocusCampo(ci)"
+                (blur)="onBlurCampo()"
+                (keydown)="onKeydown($event)"
+              />
+              @if (activeInput() === ci && filtered().length > 0) {
+                <div class="autocomplete-list">
+                  @for (m of filtered(); track m; let si = $index) {
+                    <div
+                      class="autocomplete-item"
+                      [class.active]="si === activeSuggestion()"
+                      (mousedown)="$event.preventDefault(); selectSuggestion(m)"
+                    >
+                      {{ m }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+            @if (ci === 0 && canAddCampo) {
+              <button class="btn-add" (click)="aggiungiCampo()" title="Aggiungi un'altra preoccupazione">+</button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="search-actions">
+        <button class="btn-primary-hero" (click)="doSearch()">Cerca →</button>
+      </div>
+
+      <div class="search-divider">
+        <div class="divider-line"></div>
+        <span>oppure</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- TEST BANNER -->
+      <div class="test-banner">
+        <div class="test-banner-text">
+          <strong>{{ homeTexts().testBannerTitle }}</strong>
+          <span>{{ homeTexts().testBannerDescription }}</span>
+        </div>
+        <div class="test-banner-actions">
+          @if (isAdmin()) {
+            <button type="button" class="btn-inline-edit light" (click)="editHomeSection('test')" title="Gestisci le domande del test">
+              ❓ Modifica Domande Test
+            </button>
+          }
+          <a routerLink="/test" class="btn-secondary-hero">{{ homeTexts().testBannerButton }}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COME FUNZIONA -->
+  <section class="how-section" id="come-funziona">
+    <div class="section-edit-anchor">
+      <div class="section-label">{{ homeTexts().howItWorksLabel }}</div>
+      @if (isAdmin()) {
+        <button type="button" class="btn-inline-edit" (click)="editHomeSection('homeTexts')">✏️ Modifica Testi</button>
+      }
+    </div>
+
+    <h2 class="section-title">{{ homeTexts().howItWorksTitle }}</h2>
+    <p class="section-sub">{{ homeTexts().howItWorksSub }}</p>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number teal">1</div>
+        <h3>Esprimi le tue preoccupazioni</h3>
+        <p>Cerca tra i temi che ti preoccupano di più riguardo all'uso della tecnologia da parte di tuo figlio.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number teal">2</div>
+        <h3>Test di valutazione</h3>
+        <p>Rispondi a poche domande mirate per capire quali aree richiedono maggiore attenzione.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number teal">3</div>
+        <h3>Regole e attività personalizzate</h3>
+        <p>Ricevi regole concrete e attività pratiche da svolgere insieme ai tuoi figli, calibrate sulla vostra situazione.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number teal">4</div>
+        <h3>Personalizza il tuo patto</h3>
+        <p>Scegli quali regole e attività tenere, elimina quelle che non fanno per voi e adatta il patto alla tua famiglia.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number teal">5</div>
+        <h3>Scarica e appendi il patto</h3>
+        <p>Salva il documento PDF con le regole scelte e appendilo in casa come promemoria visibile per tutta la famiglia.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BASI SCIENTIFICHE -->
+  <section class="science-section" id="esperti">
+    <div class="science-inner">
+      <div class="science-text">
+        <div class="section-label">{{ homeTexts().scienceLabel }}</div>
+        <h2 class="section-title" style="white-space: pre-line;">{{ homeTexts().scienceTitle }}</h2>
+        <p class="section-sub">{{ homeTexts().scienceSub }}</p>
+        @if (isAdmin()) {
+          <div style="margin-top: 1rem;">
+            <button type="button" class="btn-inline-edit" (click)="editHomeSection('raccomandazioni')">
+              🏛️ Gestisci Raccomandazioni Milano
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="expert-cards">
+        <div class="expert-card">
+          <div class="expert-name">Serge Tisseron</div>
+          <div class="expert-method">Regola 3-6-9-12 · Autoregolazione</div>
+          <p class="expert-desc">
+            Psichiatra e psicoanalista francese: definisce le tappe di accesso ai media digitali
+            per età, promuovendo lo sviluppo graduale dell'autocontrollo.
+          </p>
+          <span class="topic-link">
+            <a href="https://docs.google.com/document/d/19qmBE8xmMvI-98pJ5vxqS4nX2TkrLri_/edit?usp=sharing&ouid=106160229544751676897&rtpof=true&sd=true" target="_blank" rel="noopener noreferrer">
+              Approfondisci →
+            </a>
+          </span>
+        </div>
+
+        <div class="expert-card">
+          <div class="expert-name">Pier Cesare Rivoltella</div>
+          <div class="expert-method">Pedagogia dell'Attenzione</div>
+          <p class="expert-desc">
+            Professore ordinario di Media e Tecnologie per la didattica all'Università di Bologna,
+            fondatore del CREMIT: sviluppa il modello della Media Education,
+            orientato alla formazione di competenze critiche nell'uso dei media digitali.
+          </p>
+          <span class="topic-link">
+            <a href="https://docs.google.com/document/d/1BDXl1nfQ_tXVcQJBrfVHnog4VRYF7F6U/edit?usp=sharing&ouid=106160229544751676897&rtpof=true&sd=true" target="_blank" rel="noopener noreferrer">
+              Approfondisci →
+            </a>
+          </span>
+        </div>
+
+        <div class="expert-card">
+          <div class="expert-name">Custodi Digitali</div>
+          <div class="expert-method">Linee guida preventive</div>
+          <p class="expert-desc">
+            Associazione italiana di riferimento per la promozione di un uso sicuro e consapevole
+            delle tecnologie da parte di bambini e ragazzi.
+          </p>
+          <span class="topic-link">
+            <a href="https://docs.google.com/document/d/1K9d5BWM9C9FqmgIkohh-ho6HNqyyml8Q/edit?usp=sharing&ouid=106160229544751676897&rtpof=true&sd=true" target="_blank" rel="noopener noreferrer">
+              Approfondisci →
+            </a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEMI PRINCIPALI (CATEGORIE DI RISCHIO) -->
+  <section class="topics-section" id="temi">
+    <div class="section-edit-anchor">
+      <div class="section-label">{{ homeTexts().topicsLabel }}</div>
+      @if (isAdmin()) {
+        <button type="button" class="btn-inline-edit" (click)="editHomeSection('categorie')" title="Inserisci o modifica le categorie di rischio">
+          📁 Gestisci Categorie ({{ categories().length }})
+        </button>
+      }
+    </div>
+
+    <h2 class="section-title">{{ homeTexts().topicsTitle }}</h2>
+    <p class="section-sub">{{ homeTexts().topicsSub }}</p>
+
+    <div class="topics-grid">
+      @if (categories().length === 0) {
+        <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+          Caricamento categorie in corso...
+        </div>
+      } @else {
+        @for (cat of categories(); track cat.id) {
+          <a [href]="cat.link || '#'" target="_blank" rel="noopener noreferrer" class="topic-card">
+            <div class="topic-icon">🌿</div>
+            <h3>{{ cat.nome }}</h3>
+            <p>{{ cat.descrizione }}</p>
+            @if (cat.link) {
+              <span class="topic-link">Approfondisci il documento →</span>
+            }
+          </a>
+        }
+      }
+    </div>
+  </section>
+
+  <!-- CHI SIAMO -->
+  <section class="about-section" id="chi-siamo">
+    <div class="about-inner">
+      <div class="section-edit-anchor">
+        <div class="section-label">Chi siamo</div>
+        @if (isAdmin()) {
+          <button type="button" class="btn-inline-edit" (click)="editHomeSection('homeTexts')">✏️ Modifica</button>
+        }
+      </div>
+
+      <h2 class="section-title">{{ homeTexts().aboutTitle }}</h2>
+      <p class="section-sub">{{ homeTexts().aboutDescription }}</p>
+
+      <div class="about-grid">
+        <div class="about-card about-card-wide">
+          <p>
+            Il progetto nasce per discutere, condividere e diffondere strategie utili a promuovere un'educazione digitale efficace e responsabile,
+            in linea con le
+            <a href="https://www.comune.milano.it/argomenti/partecipazione-civica/raccomandazioni-per-il-benessere-e-la-sicurezza-digitale-di-bambini-e-e-pre-adolescenti" target="_blank"
+              rel="noopener noreferrer">
+              dieci raccomandazioni del Comune di Milano
+            </a>.
+          </p>
+        </div>
+
+        <div class="about-card">
+          <div class="about-role">Ideazione e supervisione psicologica</div>
+          <div class="about-name">Nicola Iannaccone</div>
+        </div>
+
+        <div class="about-card">
+          <div class="about-role">Ideazione e supervisione tecnica</div>
+          <div class="about-name">Fabio Malizia</div>
+        </div>
+
+        <div class="about-card">
+          <div class="about-role">Sviluppo software</div>
+          <div class="about-name">Famlonga Nicolo e Petruzzelli Luca</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRIVACY -->
+  <section class="privacy-section">
+    <div class="privacy-inner">
+      <div class="section-edit-anchor">
+        <div class="section-label">{{ homeTexts().privacyLabel }}</div>
+        @if (isAdmin()) {
+          <button type="button" class="btn-inline-edit" (click)="editHomeSection('homeTexts')">✏️ Modifica</button>
+        }
+      </div>
+
+      <h2 class="section-title">{{ homeTexts().privacyTitle }}</h2>
+      <p class="section-sub">{{ homeTexts().privacySub }}</p>
+
+      <div class="privacy-grid">
+        <div class="privacy-card">
+          <div class="privacy-card-title">Cosa succede ai dati inseriti</div>
+          <p>
+            Le preoccupazioni espresse e le risposte ai test non vengono salvate, archiviate o condivise con terze parti.
+          </p>
+        </div>
+
+        <div class="privacy-card">
+          <div class="privacy-card-title">Elaborazione temporanea</div>
+          <p>
+            Le informazioni vengono usate solo in tempo reale per generare suggerimenti educativi personalizzati e vengono eliminate al termine della sessione.
+          </p>
+        </div>
+
+        <div class="privacy-card">
+          <div class="privacy-card-title">Principi applicati</div>
+          <p>
+            Il progetto segue i principi del <strong>Regolamento Generale sulla Protezione dei Dati (GDPR)</strong>: trasparenza, minimizzazione dei dati e uso responsabile delle informazioni.
+          </p>
+        </div>
+
+        <div class="privacy-card">
+          <div class="privacy-card-title">Nessun uso commerciale</div>
+          <p>
+            Nessun dato personale viene utilizzato a fini commerciali o di profilazione.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-brand-text">🌿 Comunità educante digitale</div>
+        <p class="footer-copy">© 2026 Comunità educante digitale. Un approccio empatico alla crescita digitale.</p>
+      </div>
+
+      <div class="footer-links">
+        <div class="footer-col">
+          <span class="footer-col-title">Esplora</span>
+          <a href="#che-cose" class="footer-link">Che cos'è?</a>
+          <a href="#come-funziona" class="footer-link">Come funziona</a>
+          <a href="#temi" class="footer-link">Categorie di rischio</a>
+        </div>
+
+        <div class="footer-col">
+          <span class="footer-col-title">Risorse</span>
+          <a href="#esperti" class="footer-link">Riferimenti teorici</a>
+          <a routerLink="/test" class="footer-link">Fai il test</a>
+        </div>
+
+        <div class="footer-col">
+          <span class="footer-col-title">Chi siamo</span>
+          <a href="#chi-siamo" class="footer-link">Il progetto</a>
+          <a href="https://www.comune.milano.it/argomenti/partecipazione-civica/raccomandazioni-per-il-benessere-e-la-sicurezza-digitale-di-bambini-e-e-pre-adolescenti"
+            target="_blank" rel="noopener noreferrer" class="footer-link">Raccomandazioni di Milano</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCRITTA IN FONDO: ACCESSO AMMINISTRATORE -->
+    <div class="footer-admin-bottom">
+      <button type="button" class="btn-footer-admin-access" (click)="openAdminLogin()">
+        accesso amministratore
+      </button>
+    </div>
+  </footer>
+</div>
+
+<!-- MODALE LOGIN AMMINISTRATORE -->
+@if (showLoginModal()) {
+  <div class="login-modal-overlay" (click)="closeAdminLogin()">
+    <div class="login-modal-container" (click)="$event.stopPropagation()">
+      <div class="login-modal-header">
+        <div class="login-icon-badge">🔐</div>
+        <h3>Accesso Amministratore</h3>
+        <button type="button" class="btn-close-modal" (click)="closeAdminLogin()" aria-label="Chiudi finestra">✕</button>
+      </div>
+
+      <form (ngSubmit)="submitAdminLogin()" class="login-form">
+        <p class="login-intro">
+          Inserisci username e password per accedere all'interfaccia di modifica del sito.
+        </p>
+
+        @if (loginError()) {
+          <div class="login-error-box">
+            ⚠️ {{ loginError() }}
+          </div>
+        }
+
+        <div class="login-field">
+          <label for="adminUsername">Username</label>
+          <input
+            id="adminUsername"
+            name="adminUsername"
+            type="text"
+            autocomplete="username"
+            placeholder="Username amministratore"
+            [ngModel]="loginUser()"
+            (ngModelChange)="loginUser.set($event); loginError.set(null)"
+            required
+            autofocus
+          />
+        </div>
+
+        <div class="login-field">
+          <label for="adminPassword">Password</label>
+          <div class="password-field-wrapper">
+            <input
+              id="adminPassword"
+              name="adminPassword"
+              [type]="showPassword() ? 'text' : 'password'"
+              autocomplete="current-password"
+              placeholder="Password amministratore"
+              [ngModel]="loginPass()"
+              (ngModelChange)="loginPass.set($event); loginError.set(null)"
+              required
+            />
+            <button
+              type="button"
+              class="btn-toggle-eye"
+              (click)="showPassword.set(!showPassword())"
+              title="Mostra o nascondi la password"
+            >
+              {{ showPassword() ? '👁️' : '🙈' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="login-modal-footer">
+          <button type="button" class="btn-secondary-modal" (click)="closeAdminLogin()">
+            Annulla
+          </button>
+          <button type="submit" class="btn-primary-modal">
+            Accedi →
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

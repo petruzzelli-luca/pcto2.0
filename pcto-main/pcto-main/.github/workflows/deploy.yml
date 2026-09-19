@@ -1,0 +1,31 @@
+name: Deploy Angular su GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del codice
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: angular-app/package-lock.json
+      - name: Installa dipendenze
+        working-directory: angular-app
+        run: npm ci
+      - name: Build con base-href /pcto/ e fallback SPA (404.html)
+        working-directory: angular-app
+        run: npm run build:pages
+      - name: Deploy su gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: angular-app/dist/angular-app/browser
+          publish_branch: gh-pages

@@ -1,0 +1,139 @@
+<nav class="results-navbar">
+  <a class="navbar-brand-text text-decoration-none" routerLink="/">
+    🌿 Educazione Digitale Familiare
+  </a>
+  <a routerLink="/" class="btn-new-search">Torna alla home</a>
+</nav>
+
+<main class="results-main">
+
+  <section class="results-hero">
+    <span class="results-eyebrow">Il tuo patto digitale</span>
+    <h1 class="results-title">Regole e attività per la tua famiglia</h1>
+    <p class="results-sub">Queste sono le regole e le attività consigliate in base alle tue risposte. Rimuovi quelle che non fanno per voi e scarica il patto personalizzato da appendere in casa.</p>
+  </section>
+
+  @if (loading()) {
+    <p class="state-message">Caricamento...</p>
+  } @else if (errore()) {
+    <p class="state-message state-error">Errore nel caricamento del patto familiare.</p>
+  } @else if (patto().length === 0) {
+    <div class="empty-box">
+      <span class="empty-box-icon">✅</span>
+      <p>Complimenti non riusciamo a trovare nessuna attività utile nella tua situazione, se riscontri dubbi ti consigliamo di rivolgerti al tuo pediatra.</p>
+    </div>
+  } @else {
+    <div class="categories-list">
+      @for (categoria of patto(); track categoria.id; let categoriaIndex = $index) {
+        <section class="category-block">
+          <div class="category-header">
+            <div class="category-icon">📚</div>
+            <h2 class="category-title">{{ categoria.info.nome || categoria.id }}</h2>
+          </div>
+
+          @if (categoria.info.descrizione) {
+            <p class="category-desc">{{ categoria.info.descrizione }}</p>
+          }
+
+          @if (conteggioAttivita(categoria) === 0) {
+            <div class="empty-box">
+              <span class="empty-box-icon">✅</span>
+              <p>Complimenti non riusciamo a trovare nessuna attività utile nella tua situazione, se riscontri dubbi ti consigliamo di rivolgerti al tuo pediatra.</p>
+            </div>
+          } @else {
+            @for (regola of categoria.regole; track regola.nome; let regolaIndex = $index) {
+              @if (regola.attivita && regola.attivita.length > 0) {
+                <div class="rule-card">
+                  <div class="rule-card-header">
+                    <span class="pill pill-rule">Regola</span>
+                    <button class="btn-delete" (click)="eliminaRegola(categoriaIndex, regolaIndex)" title="Rimuovi questa regola">🗑️</button>
+                  </div>
+                  <h3 class="rule-name">{{ regola.dati.icona || '📌' }} {{ regola.nome }}</h3>
+                  <p class="rule-desc">{{ regola.dati.descrizione || '' }}</p>
+                  @if (regola.dati.raccomandazione) {
+                    <div class="rule-recommendation">
+                      <strong>Raccomandazione:</strong>
+                      @if (regola.dati.linkRaccomandazione) {
+                        <a [href]="regola.dati.linkRaccomandazione" target="_blank" rel="noopener noreferrer">{{ regola.dati.raccomandazione }}</a>
+                      } @else {
+                        {{ regola.dati.raccomandazione }}
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="activities-list">
+                  @for (attivita of regola.attivita; track attivita.nome; let attivitaIndex = $index) {
+                    <div class="activity-card">
+                      <div class="activity-card-header">
+                        <span class="pill pill-activity">Attività consigliata</span>
+                        <button class="btn-delete" (click)="eliminaAttivita(categoriaIndex, regolaIndex, attivitaIndex)" title="Rimuovi questa attività">🗑️</button>
+                      </div>
+                      <h4 class="activity-name">🛠️ {{ attivita.nome || '' }}</h4>
+                      <p class="activity-desc">{{ attivita.descrizione || '' }}</p>
+                      <div class="activity-meta">
+                        <div class="activity-meta-info">
+                          @if (attivita.eta) { <span>👶 {{ attivita.eta }}</span> }
+                          @if (attivita.durata) { <span>⏱ {{ attivita.durata }}</span> }
+                          @if (attivita.frequenza) { <span>🔁 {{ attivita.frequenza }}</span> }
+                        </div>
+                        @if (attivita.approccio) {
+                          <a [href]="attivita.approccio" target="_blank" rel="noopener noreferrer" class="btn-theory">Teoria</a>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            }
+          }
+        </section>
+      }
+    </div>
+  }
+
+  <section class="cta-cluster">
+    <button class="cta-card cta-card-primary" [disabled]="!pdfAbilitato()" (click)="downloadPDF()">
+      <span class="cta-card-label">Esporta</span>
+      <span class="cta-card-title">Salva il patto in PDF</span>
+    </button>
+    <a routerLink="/test" [queryParams]="rifaiQueryParams" class="cta-card cta-card-outline">
+      <span class="cta-card-label">Aggiorna</span>
+      <span class="cta-card-title">Rifai il test</span>
+    </a>
+    <a routerLink="/" class="cta-card cta-card-ghost">
+      <span class="cta-card-label">Naviga</span>
+      <span class="cta-card-title">Torna alla home</span>
+    </a>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-brand-text">🌿 Educazione Digitale Familiare</div>
+      <p class="footer-copy">© 2026 Comunità educante digitale. Un approccio empatico alla crescita digitale.</p>
+    </div>
+
+    <div class="footer-links">
+      <div class="footer-col">
+        <span class="footer-col-title">Naviga</span>
+        <a routerLink="/" class="footer-link">Torna alla home</a>
+        <a routerLink="/test" [queryParams]="rifaiQueryParams" class="footer-link">Rifai il test</a>
+      </div>
+
+      <div class="footer-col">
+        <span class="footer-col-title">Risorse</span>
+        <a routerLink="/" fragment="esperti" class="footer-link">Riferimenti teorici</a>
+        <a routerLink="/" fragment="temi" class="footer-link">Categorie di rischio</a>
+      </div>
+
+      <div class="footer-col">
+        <span class="footer-col-title">Chi siamo</span>
+        <a routerLink="/" fragment="chi-siamo" class="footer-link">Il progetto</a>
+      </div>
+    </div>
+  </div>
+</footer>

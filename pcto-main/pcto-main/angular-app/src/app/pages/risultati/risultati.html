@@ -1,0 +1,81 @@
+<nav class="results-navbar">
+  <a class="navbar-brand-text text-decoration-none" routerLink="/">
+    🌿 Educazione Digitale Familiare
+  </a>
+  <a routerLink="/" class="btn-new-search">Nuova ricerca</a>
+</nav>
+
+<main class="results-main">
+
+  <section class="results-hero">
+    <span class="results-eyebrow">Risultati della tua ricerca</span>
+    <h1 class="results-title">Le aree più rilevanti per te</h1>
+    <p class="results-sub">Clicca su una categoria per leggere la spiegazione ed eventuali approfondimenti teorici.</p>
+  </section>
+
+  @if (loading()) {
+    <p class="state-message">Caricamento...</p>
+  } @else if (errore()) {
+    <p class="state-message state-error">Errore nel caricamento dei risultati.</p>
+  } @else {
+    <div class="results-list">
+      @for (r of risultati(); track r.id) {
+        <div class="result-card" [class.open]="r.expanded">
+          <button type="button" class="result-header" (click)="toggle(r)">
+            <span class="result-name">{{ r.nome }}</span>
+            <span class="result-chevron">⌄</span>
+          </button>
+          <div class="result-content">
+            <div class="result-content-inner">
+              <div class="result-divider"></div>
+              <p class="result-desc">{{ r.descrizione }}</p>
+              @if (r.link) {
+                <div class="result-link-wrap">
+                  <a [href]="r.link" target="_blank" rel="noopener noreferrer" class="btn-explore">
+                    Approfondisci
+                    <span class="btn-explore-arrow">→</span>
+                  </a>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="cta-box">
+    <a routerLink="/" class="btn-secondary-hero">Torna alla ricerca</a>
+    <a routerLink="/test" [queryParams]="pattoQueryParams" class="btn-primary-hero">Crea il tuo patto familiare</a>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-brand-text">🌿 Educazione Digitale Familiare</div>
+      <p class="footer-copy">© 2026 Comunità educante digitale. Un approccio empatico alla crescita digitale.</p>
+    </div>
+
+    <div class="footer-links">
+      <div class="footer-col">
+        <span class="footer-col-title">Naviga</span>
+        <a routerLink="/" class="footer-link">Torna alla home</a>
+        <a routerLink="/test" class="footer-link">Fai il test</a>
+      </div>
+
+      <div class="footer-col">
+        <span class="footer-col-title">Risorse</span>
+        <a routerLink="/" fragment="esperti" class="footer-link">Riferimenti teorici</a>
+        <a routerLink="/" fragment="temi" class="footer-link">Categorie di rischio</a>
+      </div>
+
+      <div class="footer-col">
+        <span class="footer-col-title">Chi siamo</span>
+        <a routerLink="/" fragment="chi-siamo" class="footer-link">Il progetto</a>
+      </div>
+    </div>
+  </div>
+</footer>
