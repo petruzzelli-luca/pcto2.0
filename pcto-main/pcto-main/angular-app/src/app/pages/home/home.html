@@ -60,11 +60,7 @@
     <div class="search-section-inner">
       <div class="section-edit-anchor">
         <div class="search-eyebrow">{{ homeTexts().searchEyebrow }}</div>
-        @if (isAdmin()) {
-          <button type="button" class="btn-inline-edit" (click)="editHomeSection('keywords')" title="Gestisci parole chiave di ricerca">
-            🔑 Gestisci Parole Chiave
-          </button>
-        }
+        
       </div>
 
       <h2>{{ homeTexts().searchTitle }}</h2>
@@ -123,11 +119,7 @@
           <span>{{ homeTexts().testBannerDescription }}</span>
         </div>
         <div class="test-banner-actions">
-          @if (isAdmin()) {
-            <button type="button" class="btn-inline-edit light" (click)="editHomeSection('test')" title="Gestisci le domande del test">
-              ❓ Modifica Domande Test
-            </button>
-          }
+          
           <a routerLink="/test" class="btn-secondary-hero">{{ homeTexts().testBannerButton }}</a>
         </div>
       </div>
@@ -138,9 +130,7 @@
   <section class="how-section" id="come-funziona">
     <div class="section-edit-anchor">
       <div class="section-label">{{ homeTexts().howItWorksLabel }}</div>
-      @if (isAdmin()) {
-        <button type="button" class="btn-inline-edit" (click)="editHomeSection('homeTexts')">✏️ Modifica Testi</button>
-      }
+
     </div>
 
     <h2 class="section-title">{{ homeTexts().howItWorksTitle }}</h2>
@@ -186,13 +176,6 @@
         <div class="section-label">{{ homeTexts().scienceLabel }}</div>
         <h2 class="section-title" style="white-space: pre-line;">{{ homeTexts().scienceTitle }}</h2>
         <p class="section-sub">{{ homeTexts().scienceSub }}</p>
-        @if (isAdmin()) {
-          <div style="margin-top: 1rem;">
-            <button type="button" class="btn-inline-edit" (click)="editHomeSection('raccomandazioni')">
-              🏛️ Gestisci Raccomandazioni Milano
-            </button>
-          </div>
-        }
       </div>
 
       <div class="expert-cards">
@@ -246,11 +229,7 @@
   <section class="topics-section" id="temi">
     <div class="section-edit-anchor">
       <div class="section-label">{{ homeTexts().topicsLabel }}</div>
-      @if (isAdmin()) {
-        <button type="button" class="btn-inline-edit" (click)="editHomeSection('categorie')" title="Inserisci o modifica le categorie di rischio">
-          📁 Gestisci Categorie ({{ categories().length }})
-        </button>
-      }
+      
     </div>
 
     <h2 class="section-title">{{ homeTexts().topicsTitle }}</h2>
@@ -281,9 +260,7 @@
     <div class="about-inner">
       <div class="section-edit-anchor">
         <div class="section-label">Chi siamo</div>
-        @if (isAdmin()) {
-          <button type="button" class="btn-inline-edit" (click)="editHomeSection('homeTexts')">✏️ Modifica</button>
-        }
+        
       </div>
 
       <h2 class="section-title">{{ homeTexts().aboutTitle }}</h2>
@@ -324,9 +301,7 @@
     <div class="privacy-inner">
       <div class="section-edit-anchor">
         <div class="section-label">{{ homeTexts().privacyLabel }}</div>
-        @if (isAdmin()) {
-          <button type="button" class="btn-inline-edit" (click)="editHomeSection('homeTexts')">✏️ Modifica</button>
-        }
+        
       </div>
 
       <h2 class="section-title">{{ homeTexts().privacyTitle }}</h2>

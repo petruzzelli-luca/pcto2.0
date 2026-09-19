@@ -230,7 +230,7 @@ export class MotoreRicerca {
    * @param testo      la preoccupazione scritta dal genitore
    * @param maxRisultati quante categorie restituire al massimo
    */
-  cerca(testo: string, maxRisultati = 4): CategoriaPunteggio[] {
+  cerca(testo: string, maxRisultati = 50): CategoriaPunteggio[] {
     const tokens = tokenize(testo);
     if (tokens.length === 0) return [];
     const queryPesi = this.espandiQuery(tokens);
@@ -279,9 +279,10 @@ export class MotoreRicerca {
 
     // normalizzazione 0..1 sul migliore e taglio delle code irrilevanti
     const max = risultati[0].punteggio || 1;
+    const categorieDellaFraseMigliore = new Set(match[0].voce.categorie);
     return risultati
       .map(r => ({ ...r, punteggio: r.punteggio / max }))
-      .filter((r, i) => i === 0 || r.punteggio >= 0.3)
+      .filter((r, i) => i === 0 || r.punteggio >= 0.3 || categorieDellaFraseMigliore.has(r.categoria))
       .slice(0, maxRisultati);
   }
 

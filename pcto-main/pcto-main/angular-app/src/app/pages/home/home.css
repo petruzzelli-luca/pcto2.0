@@ -1097,6 +1097,10 @@ p { color: var(--on-surface-variant); line-height: 1.625; letter-spacing: 0.025e
   flex-wrap: wrap;
 }
 
+.hero-top-row {
+  justify-content: center;
+}
+
 .btn-inline-edit {
   display: inline-flex;
   align-items: center;

@@ -454,6 +454,7 @@ function risolviCategoriaId(nomeCategoria: string, data: AppData): string {
   return (
     Object.values(data.categories).find(
       c =>
+        normalizeTextAvanzata(c.id) === norm ||
         normalizeTextAvanzata(c.categoria) === norm ||
         normalizeTextAvanzata(c.nome) === norm ||
         normalizeTextAvanzata(c.slug) === norm

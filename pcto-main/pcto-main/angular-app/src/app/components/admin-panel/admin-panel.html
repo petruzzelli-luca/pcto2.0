@@ -13,17 +13,7 @@
       (click)="toggleSidebar()"
       title="Apri o chiudi il pannello per modificare le informazioni del sito"
     >
-      📂 Modifica Informazioni
-      <span class="admin-count-pill">{{ categoryList().length + ruleList().length }} elementi</span>
-    </button>
-
-    <button
-      type="button"
-      class="btn-admin-nav"
-      (click)="openTab('homeTexts')"
-      title="Modifica i testi visibili sulla Home"
-    >
-      📝 Modifica Testi Home
+      Modifica Informazioni
     </button>
   </div>
 
@@ -49,7 +39,6 @@
       (click)="saveAllChanges()"
       title="Salva tutte le modifiche apportate nel browser"
     >
-      <span class="btn-icon">💾</span>
       <span>Salva modifiche</span>
     </button>
 
