@@ -1018,6 +1018,7 @@ p { color: var(--on-surface-variant); line-height: 1.625; letter-spacing: 0.025e
   grid-template-columns: 1fr;
   gap: 2rem;
 }
+
 @media (min-width: 768px) {
   .footer-inner {
     grid-template-columns: 1fr 1fr;
